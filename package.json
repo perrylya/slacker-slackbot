@@ -1,0 +1,22 @@
+{
+  "name": "slack-scheduler-bot",
+  "version": "1.0.0",
+  "description": "A Slackbot with Google Calendar integration to schedule events.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "babel": "mkdir -p build && babel server.js -o build/main.bundle.js",
+    "lint": "eslint --fix *.js",
+    "start": "babel-node server.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "babel-cli": "^6.26.0",
+    "babel-preset-env": "^1.7.0",
+    "eslint": "^5.2.0"
+  },
+  "dependencies": {
+    "googleapis": "^27.0.0"
+  }
+}
