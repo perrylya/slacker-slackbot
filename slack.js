@@ -2,6 +2,14 @@ const { RTMClient, WebClient } = require('@slack/client');
 var axios = require('axios');
 const token = process.env.SLACK_TOKEN;
 const dialogflow = require('dialogflow');
+const fs = require('fs');
+const readline = require('readline');
+const {google} = require('googleapis');
+const express = require('express')
+const bodyParser =require('body-parser')
+
+
+
 
 // The client is initialized and then started to get an active connection to the platform
 const rtm = new RTMClient(token);
@@ -22,9 +30,15 @@ const sessionPath = sessionClient.sessionPath(projectId, sessionId);
 // Send request and log result
 
 
-
 rtm.start();
 rtm.on('message', (event) => {
+  if(!event.bot_id)return 
+  web.chat.postMessage({
+    Channel: event.channel,
+    Text: "",
+    "attachments": []
+  })
+  
   const request = {
     session: sessionPath,
     queryInput: {
@@ -83,3 +97,7 @@ web.channels.list()
     console.log('This bot does not belong to any channel, invite it to at least one and try again');
   }
 });
+
+
+
+
