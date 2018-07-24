@@ -1,4 +1,5 @@
 const { RTMClient, WebClient } = require('@slack/client');
+const { createMessageAdapter } = require('@slack/interactive-messages');
 var axios = require('axios');
 const token = process.env.SLACK_TOKEN;
 const dialogflow = require('dialogflow');
@@ -12,15 +13,15 @@ var URL= "https://api.dialogflow.com/v1/query?v=20150910"
 const projectId = 'newagent-a0c16'; //https://dialogflow.com/docs/agents#settings
 const sessionId = 'quickstart-session-id';
 const languageCode = 'en-US';
-// Instantiate a DialogFlow client.
 const sessionClient = new dialogflow.SessionsClient();
-// Define session path
 const sessionPath = sessionClient.sessionPath(projectId, sessionId);
-//wrap whoel thing in Dialogueflow funciton, will keep running
-// The text query request.
 
-// Send request and log result
-
+const web = new WebClient(token)
+const slackInteractions = createMessageAdapter(token);
+const port = process.env.PORT || 3000;
+slackInteractions.start(port).then(() => {
+  console.log('server listening on port:' + port);
+})
 
 
 rtm.start();
@@ -34,52 +35,67 @@ rtm.on('message', (event) => {
       },
     },
   };
+  if(event.bot_id) return
   sessionClient
-    .detectIntent(request)
-    //implicitly detect intent trying to trigger / should sent trigger
-    .then(responses => {
-      console.log('Detected intent');
-      const result = responses[0].queryResult;
-      console.log(result)
-      // if(!result.allRequredParamsPresent){
-      //     //call function again
-      // }
-      console.log(`  Query: ${result.queryText}`);
-      console.log(`  Response: ${result.fulfillmentText}`);
-      rtm.sendMessage(result.fulfillmentText, channelId)
-
+  .detectIntent(request)
+  //implicitly detect intent trying to trigger / should sent trigger
+  .then(responses => {
+    console.log('Detected intent');
+    const result = responses[0].queryResult;
+    console.log(result)
+    // if(!result.allRequredParamsPresent){
+    //     //call function again
+    // }
+    console.log(`  Query: ${result.queryText}`);
+    console.log(`  Response: ${result.fulfillmentText}`);
+    if(result.fulfillmentText.includes('Create') && result.fulfillmentText.includes('?')){
+      web.chat.postMessage({
+        channel: channelId,
+        as_user: true,
+        'text': result.fulfillmentText,
+        'attachments': [
+          {
+            'fallback': 'Reminder cancelled, please try again if needed',
+            'callback_id': 'confirm_event',
+            'color': '#3AA3E3',
+            'attachment_type': 'default',
+            'actions': [
+              {
+                'name': 'yes',
+                'text': 'Yes',
+                'type': 'button',
+                'value': 'yes'
+              },
+              {
+                'name': 'no',
+                'text': 'No',
+                'style': 'danger',
+                'type': 'button',
+                'value': 'No',
+                'confirm': {
+                  'title': 'Are you sure?',
+                  'text': 'You sure you would like to cancel this reminder?',
+                  'ok_text': 'Yes',
+                  'dismiss_text': 'No'
+                }
+              }
+            ]
+          }
+        ]
+      })
+    }
+    else{
       if (result.intent) {
-        console.log(`  Intent: ${result.intent.displayName}`);
+        rtm.sendMessage(result.fulfillmentText, channelId);
+        console.log(`Intent: ${result.intent.displayName}`);
       } else {
-        console.log(`  No intent matched.`);
+        console.log(`No intent matched.`);
       }
-    })
+    }
+  })
     .catch(err => {
       console.error('ERROR:', err);
     });
 
   // .catch(resp=> console.log('Error', error))
 })
-
-
-// Need a web client to find a channel where the app can post a message
-const web = new WebClient(token);
-
-// Load the current channels list asynchrously
-web.channels.list()
-.then((res) => {
-  // Take any channel for which the bot is a member
-  const channel = res.channels.find(c => c.is_member);
-
-  if (channel) {
-    console.log(channel.id);
-    // We now have a channel ID to post a message in!
-    // use the `sendMessage()` method to send a simple string to a channel using the channel ID
-    rtm.sendMessage('yeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeer', channel.id)
-    // Returns a promise that resolves when the message is sent
-    .then((msg) => console.log(`Message sent to channel ${channel.name} with ts:${msg.ts}`))
-    .catch(console.error);
-  } else {
-    console.log('This bot does not belong to any channel, invite it to at least one and try again');
-  }
-});
