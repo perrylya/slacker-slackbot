@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+mongoose.connect(process.env.MONGODB_URI)
 
 var UserSchema = new mongoose.Schema({
 Meeting:{
@@ -8,7 +9,7 @@ Meeting:{
 SlackId:{
     type: String
 },
-google:{
+googleTokens:{
     tokens: {}
 },
 pending:{
