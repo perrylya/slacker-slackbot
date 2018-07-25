@@ -3,6 +3,7 @@ import path from 'path';
 import bodyParser from 'body-parser';
 import http from 'http';
 import {google} from 'googleapis';
+import User from './models/user'
 
   
 let app = express();
@@ -27,13 +28,13 @@ const oauth2Client = new google.auth.OAuth2(
   }))
   
 app.get('/oauthcallback', (req, res) => {
-    var user={google:{}};
+    var User={google:{}};
     var token; 
     oauth2Client.getToken(req.query.code, function (err, token) {
       if (err) return console.error(err.message)
       oauth2Client.setCredentials(token);
       const calendar = google.calendar({version: 'v3', auth: oauth2Client});
-      user.google.token = token 
+      User.google.token = token 
     
       calendar.events.list({
         calendarId: 'primary',
@@ -53,9 +54,9 @@ app.get('/oauthcallback', (req, res) => {
         } else {
           console.log('No upcoming events found.');
         }
-      console.log(user)
+      console.log(User)
       console.log('token', token, 'req.query:', req.query) // req.query.state <- meta-data
-    //   return user.save()
+      return User.save()
 
     })
     res.send('Connected to Google!')
