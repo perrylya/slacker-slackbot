@@ -1,10 +1,11 @@
-const express = require('express')
-const bodyParser =require('body-parser')
-const dialogflow = require('dialogflow');
+import dialogflow from 'dialogflow'
 const sessionClient = new dialogflow.SessionsClient();
+const projectId = "newagent-a0c16";
+const sessionId = "quickstart-session-id";
+const query = 'Schedule a meeting with Francis';
+const languageCode = "en-US";
 
 
- 
  export function interpret(slackId, query){
   const sessionPath = sessionClient.sessionPath(projectId, slackId);
   const request = {

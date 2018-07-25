@@ -1,5 +1,4 @@
-import mongoose from 'mongoose';
-mongoose.connect(process.env.MONGODB_URI)
+import mongoose from 'mongoose'
 
 var UserSchema = new mongoose.Schema({
 Meeting:{
@@ -10,12 +9,13 @@ SlackId:{
     type: String
 },
 googleTokens:{
-    tokens: {}
+    type: Object,
+    required: true
 },
 pending:{
     date:String,
-    description: String 
+    description: String
 }
 });
 var User = mongoose.model('User', UserSchema);
-module.exports = User
+export default User;

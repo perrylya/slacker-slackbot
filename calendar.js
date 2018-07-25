@@ -1,4 +1,4 @@
-const {google} = require('googleapis');
+import {google} from 'googleapis';
 
 function getClient(){
     return new google.auth.OAuth2(
@@ -7,53 +7,61 @@ function getClient(){
         process.env.REDIRECT_URL
       )
 
-} 
-export function getAuthUrl(state) {
+}
+
+ function getAuthUrl(state) {
     return getClient().generateAuthUrl({
         access_type: 'offline',
         scope: [
-          'https://www.googleapis.com/auth/calendar',  
+          'https://www.googleapis.com/auth/calendar',
         ],
-        state 
+        state
       })
   }
- 
-export function getToken(code,cb){
+
+ function getToken(code,cb){
     getClient().getToken(code,cb)
 }
 
-export function refreshToken(token){
+ function refreshToken(token){
     let client = getClient();
     client.setCredentials(token)
-    client.refreshAccessToken((err,token)=> {
-        return token; 
+    return new Promise((resolve, reject) => {
+      client.refreshAccessToken((err,token)=> {
+        if(err) reject(err)
+        resolve(token);
+      })
     })
 }
 //   console.log(authUrl)
 
-export function createEvent(){
+function createEvent(token, data){
     let client = getClient()
     client.setCredentials(token)
 
     const calendar = google.calendar({version: 'v3', auth: client});
     console.log(data)
-    
+
     let start = new Date(data.date)
-    let time = new Date(data.time)
-    calendar.events.insert({ //inserting an event 
+    let time = new Date(data.time);
+      start.setHours(time.getHours());
+      start.setMinutes(time.getMinutes());
+    calendar.events.insert({ //inserting an event
       calenderId: 'primary',
       resource: {
           summary: data.summary,
           start: {
-              dateTime:
+              dateTime: start.toISOString()
           },
-          end: {}
+          end: {
+            dateTime: new Date(start.getTime() + 1800000).toISOString()
+          }
       }
-    
+
     })
     res.send('Connected to Google!')
 
 
 }
 
-
+module.exports ={getAuthUrl, getToken, createEvent, refreshToken}
