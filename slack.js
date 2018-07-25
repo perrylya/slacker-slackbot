@@ -1,159 +1,136 @@
-const { RTMClient, WebClient } = require('@slack/client');
-const { createMessageAdapter } = require('@slack/interactive-messages');
-var axios = require('axios');
+import { RTMClient, WebClient } from '@slack/client';
+import { createMessageAdapter } from '@slack/interactive-messages';
+import axios from 'axios';
 const token = process.env.SLACK_TOKEN;
-const dialogflow = require('dialogflow');
-const fs = require('fs');
-const readline = require('readline');
-const {google} = require('googleapis');
-const express = require('express')
-const bodyParser =require('body-parser')
+import interpret from './dialogflow.js';
+import User from './models/User.js';
+import {getAuthUrl,getToken, createEvent, refreshToken} from './calendar.js'
+
 
 const web = new WebClient(token)
-
-// The client is initialized and then started to get an active connection to the platform
 const rtm = new RTMClient(token);
 const channelId = 'CBVD6FC7L';
-var URL= "https://api.dialogflow.com/v1/query?v=20150910"
-const projectId = 'newagent-a0c16'; //https://dialogflow.com/docs/agents#settings
-const sessionId = 'quickstart-session-id';
-const languageCode = 'en-US';
-import interpret from './dialogflow'
-
-
-
-// Instantiate a DialogFlow client.
-const sessionClient = new dialogflow.SessionsClient();
-// Define session path
-
-//wrap whoel thing in Dialogueflow funciton, will keep running
-// The text query request.
-
-// Send request and log result
-
-const web = new WebClient(token)
-const slackInteractions = createMessageAdapter(token);
-const port = process.env.PORT || 3000;
-slackInteractions.start(port).then(() => {
-  console.log('server listening on port:' + port);
-})
 
 rtm.start();
+
 rtm.on('message', async (event) => {
-  if(event.bot_id)return;
+  try {
+    if(event.bot_id || !event.user)return;
 
-  try{
-  let user = await User.findOne({slackId: event.user})
-  } catch(e){
-    console.log(e)
+    let user = await User.findOne({slackId: event.user})
+    if (!user){
+      console.log(User)
+      console.log(getAuthUrl);
+      console.log(getToken);
+      console.log(createEvent)
+      console.log(refreshToken);
+      console.log(interpret);
+      var authenticate = getAuthUrl(event.user);
+      console.log(authenticate);
+      return rtm.sendMessage('Please sign in with Google'+authenticate, event.channel)
+    }
+    else if(user.googleTokens.expiry_date < Date.now() + 60000){ //check expiry date
+      let token = refreshToken(user.googleTokens)
+      user.googleTokens = token
+      await user.save()
+      return
+    }
+
+    let botResponse = await interpret(event.user, event.text)
+
+    if(!botResponse.allRequiredParamsPresent)
+    rtm.sendMessage(botResponse.fulfillmentText,event.channel)
+    .catch(console.error)
+    else {
+
+      let {invitee, day, time} = botResponse.parameters.fields
+      let person = invitee.listValue.values[0]
+      let text = `Confirm a meeting with ${person.stringVale} on ${new Date(day.stringValue).toDateString()} `;
+      const data = {person: person.stringValue, date: new Date(day.stringValue), time: new Date(time.stringValue).toDateString(), summary: text};
+
+      web.chat.postMessage({
+        Channel: event.channel,
+        Text: "Hello there",
+        "attachments": [{
+          "text": text,
+          "fallback": "Reminder cancelled, please try again.",
+          "callack_id": "remindr_event",
+          "color": "#3AA3E3",
+          "attachment_type": "default",
+          "actions": [
+            {
+              "name": "confirm",
+              "text": "confirm",
+              "type": "button",
+              "value": JSON.stringify(data)
+            },
+            {
+              "name": "cancel",
+              "text": "cancel",
+              "type": "button",
+              "value": "false"
+            },
+          ]
+        }]
+      })
+      .then((res) => {
+        console.log('Message sent: ', res.ts);
+      })
+      .catch(console.error);
+    }
+  } catch (e) {
+    console.log(e);
   }
-  if (!user){
-    return rtm.sendMessage(`Please signin with Google + ${getAuthUrl(event.user)}`, event.channel)
-  }else if(user.googleTokens.expiry_date < Date.now() + 60000){ //check expiry date 
-    let token = refreshToken(user.googleTokens)
-    user.googleTokens = token
-    await user.save()
-    return
-  }
-
-  let botResponse = await interpret(event.user, event.text)
-
-  if(!botResponse.allRequiredParamsPresent)
-  rtm.sendMessage(botResponse.fulfillmentText,event.channel)
-      .catch(console.error)
-      else {
-     
-        let {invitee, day} = botResponse.parameters.fields 
-
-        let person = invitee.listValue.values[0]
-        let text = `Confirm a meeting with ${person.stringVale} on ${day.stringValue.toDateString()} `
-   
-        
-      
-        web.chat.postMessage({
-          Channel: event.channel,
-          Text: "",
-          "attachments": [{}]
-
-
-        })
-
-      }  
-
-
-  
-//check if(botResponse.allRequiredParamsPresent)
-// rtm.sendMessage(botResponse.fullfillmentText,event.channel).catch(console.error)
-      // else {
-        //rtm.sendMessage("conversation complete", event.channel)
-      //}
-
-
-
-
-  // export function interpret(slackId, query){
-  // const sessionPath = sessionClient.sessionPath(projectId, sessionId);
-  // const request = {
-  //   session: sessionPath, //keeps track of which conversation is which, using unique sessionId/slackId
-  //   queryInput: {
-  //     text: {
-  //       text: event.text,
-  //       languageCode: languageCode,
-  //     },
-  //   },
-  // };
-  // sessionClient
-  //   .detectIntent(request)
-  //   //implicitly detect intent trying to trigger / should sent trigger
-  //   .then(responses => {
-  //     console.log('Detected intent');
-  //     const result = responses[0].queryResult;
-  //     console.log(result)
-  //     // if(!result.allRequredParamsPresent){
-  //     //     //call function again
-  //     // }
-  //     console.log(`  Query: ${result.queryText}`);
-  //     console.log(`  Response: ${result.fulfillmentText}`);
-  //     rtm.sendMessage(result.fulfillmentText, channelId)
-
-  //     if (result.intent) {
-  //       console.log(`  Intent: ${result.intent.displayName}`);
-  //     } else {
-  //       console.log(`  No intent matched.`);
-  //     }
-  //   })
-  //   .catch(err => {
-  //     console.error('ERROR:', err);
-  //   });
-
-  // // .catch(resp=> console.log('Error', error))
-  // }
 })
 
 
 
-// Need a web client to find a channel where the app can post a message
-const web = new WebClient(token);
 
-// Load the current channels list asynchrously
-web.channels.list()
-.then((res) => {
-  // Take any channel for which the bot is a member
-  const channel = res.channels.find(c => c.is_member);
 
-  if (channel) {
-    console.log(channel.id);
-    // We now have a channel ID to post a message in!
-    // use the `sendMessage()` method to send a simple string to a channel using the channel ID
-    rtm.sendMessage('yeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeer', channel.id)
-    // Returns a promise that resolves when the message is sent
-    .then((msg) => console.log(`Message sent to channel ${channel.name} with ts:${msg.ts}`))
-    .catch(console.error);
-  } else {
-    console.log('This bot does not belong to any channel, invite it to at least one and try again');
-  }
-});
+
+//check if(botResponse.allRequiredParamsPresent)
+// rtm.sendMessage(botResponse.fullfillmentText,event.channel).catch(console.error)
+// else {
+//rtm.sendMessage("conversation complete", event.channel)
+//}
 
 
 
 
+// export function interpret(slackId, query){
+// const sessionPath = sessionClient.sessionPath(projectId, sessionId);
+// const request = {
+//   session: sessionPath, //keeps track of which conversation is which, using unique sessionId/slackId
+//   queryInput: {
+//     text: {
+//       text: event.text,
+//       languageCode: languageCode,
+//     },
+//   },
+// };
+// sessionClient
+//   .detectIntent(request)
+//   //implicitly detect intent trying to trigger / should sent trigger
+//   .then(responses => {
+//     console.log('Detected intent');
+//     const result = responses[0].queryResult;
+//     console.log(result)
+//     // if(!result.allRequredParamsPresent){
+//     //     //call function again
+//     // }
+//     console.log(`  Query: ${result.queryText}`);
+//     console.log(`  Response: ${result.fulfillmentText}`);
+//     rtm.sendMessage(result.fulfillmentText, channelId)
+
+//     if (result.intent) {
+//       console.log(`  Intent: ${result.intent.displayName}`);
+//     } else {
+//       console.log(`  No intent matched.`);
+//     }
+//   })
+//   .catch(err => {
+//     console.error('ERROR:', err);
+//   });
+
+// // .catch(resp=> console.log('Error', error))
+// }

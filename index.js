@@ -1,18 +1,19 @@
 import express from 'express';
-import path from 'path';
+import axios from 'axios';
+const app = express();
+import {getAuthUrl, getToken, createEvent} from './calendar';
+import User from './models/User';
 import bodyParser from 'body-parser';
-import http from 'http';
-import {google} from 'googleapis';
-import User from './models/user'
-import {getAuthUrl, getToken, createEvent} from './calendar'
-import slack from './slack'
+import mongoose from 'mongoose';
 
-let app = express();
-const server = http.Server(app);
+mongoose.connection.on('connected', function(){
+  console.log('Connected to MongoDB');
+  console.log(getAuthUrl);
+})
 
+mongoose.connect(process.env.MONGODB_URI)
+import "./slack";
 
-
-app.use(express.static(path.join(__dirname, 'build')));
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
@@ -20,9 +21,9 @@ app.post('/slack', (req,res)=>{
 
     let payload  = JSON.parse(req.body.payload)
     let user = paylaod.user.id
-    let data = JSON.parse(payload.actions[0].value) 
+    let data = JSON.parse(payload.actions[0].value)
 
-    User.findone({slackId: user})
+    User.findOne({slackId: user})
         .then((u) => {
             createEvent(u.googleTokens, data)
         })
@@ -33,24 +34,23 @@ app.post('/slack', (req,res)=>{
 
 
 app.get('/oauthcallback', (req, res) => {
-    var User={google:{}};
-    var token; 
     getToken(req.query.code, function (err, token) {
         let user = new User({
             slackId: req.body.state,
-            googleTokens:tokens
+            googleTokens:token
         })
-      if (err) return console.error(err.message)
-
+        user.save()
+          .then(() => {
+            res.send('Received code');
+          })
 
 
     //   oauth2Client.setCredentials(token);
     //   const calendar = google.calendar({version: 'v3', auth: oauth2Client});
-    //   User.google.token = token 
-    
-     
-     
+    //   User.google.token = token
+
+  })
 })
 
 
-server.listen(process.env.PORT || 1337);
+app.listen(3000);
