@@ -45,9 +45,11 @@ export function createEvent(){
       resource: {
           summary: data.summary,
           start: {
-              dateTime:
+              dateTime: start.toISOString()
           },
-          end: {}
+          end: {
+              dateTime: new Date(start.getTime + 1800000).toISOString()
+          }
       }
     
     })
