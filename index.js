@@ -18,12 +18,13 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
 app.post('/slack', (req,res)=>{
-
+    console.log(payload)
+    console.log('***************************')
     let payload  = JSON.parse(req.body.payload)
-    let user = paylaod.user.id
+    let user = payload.user.id
     let data = JSON.parse(payload.actions[0].value)
 
-    User.findOne({slackId: user})
+    User.findOne({SlackId: user})
         .then((u) => {
             createEvent(u.googleTokens, data)
         })

@@ -44,16 +44,17 @@ rtm.on('message', async (event) => {
     else if(botResponse.allRequiredParamsPresent && botResponse.intent.displayName === 'reminder'){
       let {date, action, task} = botResponse.parameters.fields
       // let person = invitee.listValue.values[0]
-      let text = `Confirm a reminder on ${new Date(date.stringValue).toDateString()} to ${action}`;
+      let text = `Confirm a reminder on ${new Date(date.stringValue).toDateString()} to ${action.stringValue}`;
       const data = {date: new Date(date.stringValue), action: action, summary: text};
       console.log('hereeeeeeeeeeeeeee');
       web.chat.postMessage({
         channel: event.channel,
         text: "Hello there",
-        "attachments": [{
+        attachments: [
+          {
           "text": text,
           "fallback": "Reminder cancelled, please try again.",
-          "callack_id": "remindr_event",
+          "callack_id": "reminder_event",
           "color": "#3AA3E3",
           "attachment_type": "default",
           "actions": [
@@ -73,7 +74,8 @@ rtm.on('message', async (event) => {
         }]
       })
       .then((res) => {
-        console.log('Message sent: ', res.ts);
+        console.log(res)
+        console.log('********************Message sent: ', res.ts);
       })
       .catch(console.error);
     }
