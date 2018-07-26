@@ -19,12 +19,7 @@ rtm.on('message', async (event) => {
 
     let user = await User.findOne({slackId: event.user})
     if (!user){
-      console.log(User)
-      console.log(getAuthUrl);
-      console.log(getToken);
-      console.log(createEvent)
-      console.log(refreshToken);
-      console.log(interpret);
+  
       var authenticate = getAuthUrl(event.user);
       console.log(authenticate);
       return rtm.sendMessage('Please sign in with Google'+authenticate, event.channel)

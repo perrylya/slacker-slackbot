@@ -28,7 +28,7 @@ app.post('/slack', (req,res)=>{
             createEvent(u.googleTokens, data)
         })
 
-    console.log(data,user)
+    console.log(data.user)
     res.send('Okay')
 })
 
