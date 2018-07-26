@@ -34,14 +34,19 @@ app.post('/slack', (req,res)=>{
 
 
 app.get('/oauthcallback', (req, res) => {
+  console.log(req.query);
     getToken(req.query.code, function (err, token) {
+      console.log('*********************************',req.query.state);
         let user = new User({
-            slackId: req.body.state,
+            SlackId: req.query.state,
             googleTokens:token
         })
         user.save()
           .then(() => {
             res.send('Received code');
+          })
+          .catch((err) =>{
+            console.log(err);
           })
 
 
