@@ -10,14 +10,15 @@ import {getAuthUrl,getToken, createEvent, refreshToken} from './calendar.js'
 const web = new WebClient(token)
 const rtm = new RTMClient(token);
 const bot_id = 'UBWEDHM4P';
+const channel = 'CBVD6FC7L'
 rtm.start();
 
 rtm.on('message', async (event) => {
   try {
-    console.log(event);
+    console.log(event.channel);
     if( event.user === bot_id || !event.user)return;
     let user = await User.findOne({SlackId: event.user})
-    console.log(user);
+    console.log('***************',user);
     if (!user){
       console.log('hi');
       return rtm.sendMessage('Please sign in with Google'+getAuthUrl(event.user), event.channel)
@@ -32,21 +33,23 @@ rtm.on('message', async (event) => {
 
     let botResponse = await interpret(event.user, event.text)
     console.log('***************************************',botResponse);
-    if(!botResponse.allRequiredParamsPresent){
-      console.log('HOLY SHIT');
-    // rtm.sendMessage(botResponse.fulfillmentText,event.channel)
-    // .catch(console.error)
+    if(botResponse.intent.displayName === 'welcome'){
+      rtm.sendMessage(botResponse.fulfillmentText,event.channel)
+      .catch(console.error)
     }
-    else {
+    else if(!botResponse.allRequiredParamsPresent && botResponse.intent.displayName === 'reminder'){
+      rtm.sendMessage(botResponse.fulfillmentText,event.channel)
+      .catch(console.error)
+    }
+    else if(botResponse.allRequiredParamsPresent && botResponse.intent.displayName === 'reminder'){
       let {date, action, task} = botResponse.parameters.fields
-      console.log('00000000000000000000000000000000',botResponse.parameters.fields);
       // let person = invitee.listValue.values[0]
       let text = `Confirm a reminder on ${new Date(date.stringValue).toDateString()} to ${action}`;
       const data = {date: new Date(date.stringValue), action: action, summary: text};
       console.log('hereeeeeeeeeeeeeee');
       web.chat.postMessage({
-        Channel: event.channel,
-        Text: "Hello there",
+        channel: event.channel,
+        text: "Hello there",
         "attachments": [{
           "text": text,
           "fallback": "Reminder cancelled, please try again.",
