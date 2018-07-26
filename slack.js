@@ -42,37 +42,40 @@ rtm.on('message', async (event) => {
       .catch(console.error)
     }
     else if(botResponse.allRequiredParamsPresent && botResponse.intent.displayName === 'reminder'){
+      console.log(botResponse.parameters.fields);
       let {date, action, task} = botResponse.parameters.fields
       // let person = invitee.listValue.values[0]
-      let text = `Confirm a reminder on ${new Date(date.stringValue).toDateString()} to ${action}`;
-      const data = {date: new Date(date.stringValue), action: action, summary: text};
+      const data = {date: new Date(date.stringValue), action: action, task: task};
       console.log('hereeeeeeeeeeeeeee');
       web.chat.postMessage({
         channel: event.channel,
-        text: "Hello there",
-        "attachments": [{
-          "text": text,
-          "fallback": "Reminder cancelled, please try again.",
-          "callack_id": "remindr_event",
-          "color": "#3AA3E3",
-          "attachment_type": "default",
-          "actions": [
+          "text": "Would you like to play a game?",
+          "attachments": [
             {
-              "name": "confirm",
-              "text": "confirm",
-              "type": "button",
-              "value": JSON.stringify(data)
-            },
-            {
-              "name": "cancel",
-              "text": "cancel",
-              "type": "button",
-              "value": "false"
-            },
+              "text": "Choose a game to play",
+              "fallback": "You are unable to choose a game",
+              "callback_id": "wopr_game",
+              "color": "#3AA3E3",
+              "attachment_type": "default",
+              "actions": [
+                {
+                  "name": "confirm",
+                  "text": "Confirm",
+                  "type": "button",
+                  "value": JSON.stringify(data)
+                },
+                {
+                  "name": "cancel",
+                  "text": "cancel",
+                  "type": "button",
+                  "value": "false"
+                }
+              ]
+            }
           ]
-        }]
       })
       .then((res) => {
+        console.log(res);
         console.log('Message sent: ', res.ts);
       })
       .catch(console.error);

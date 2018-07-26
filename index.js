@@ -14,22 +14,25 @@ mongoose.connection.on('connected', function(){
 mongoose.connect(process.env.MONGODB_URI)
 import "./slack";
 
-app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
-app.post('/slack', (req,res)=>{
+app.get('/slack', (req, res) => {
+  res.send('here');
+})
 
+app.post('/slack', (req, res)=>{
+    // res.status(200).send({challenge: req.body.challenge})
     let payload  = JSON.parse(req.body.payload)
-    let user = paylaod.user.id
+    let user = payload.user.id
     let data = JSON.parse(payload.actions[0].value)
-
-    User.findOne({slackId: user})
+    console.log('---------------------------------',user);
+    User.findOne({SlackId: user})
         .then((u) => {
             createEvent(u.googleTokens, data)
+            console.log('---------------------',data,user)
+            res.send('Okay')
         })
-
-    console.log(data,user)
-    res.send('Okay')
 })
 
 

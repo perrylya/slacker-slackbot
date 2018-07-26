@@ -40,12 +40,16 @@ function createEvent(token, data){
     client.setCredentials(token)
 
     const calendar = google.calendar({version: 'v3', auth: client});
-    console.log(data)
-
-    let start = new Date(data.date)
-    let time = new Date(data.time);
-      start.setHours(time.getHours());
-      start.setMinutes(time.getMinutes());
+    console.log('------',data)
+    console.log('11111111111111111111',data.date);
+    let DateTime start = new DateTime(data.date)
+    let DateTime end = new DateTime(start + 1800000).toISOString()
+    console.log('00000000000000000000000000',end);
+    console.log('-----------',start);
+    // let time = new Date(data.time);
+      // start.setHours(time.getHours());
+      // start.setMinutes(time.getMinutes());
+    console.log('-----------------',start);
     calendar.events.insert({ //inserting an event
       calenderId: 'primary',
       resource: {
@@ -54,12 +58,14 @@ function createEvent(token, data){
               dateTime: start.toISOString()
           },
           end: {
-            dateTime: new Date(start.getTime() + 1800000).toISOString()
+            dateTime:end
           }
       }
 
+    },
+    (err,resp)=> {
+      console.log(resp)
     })
-    res.send('Connected to Google!')
 
 
 }
