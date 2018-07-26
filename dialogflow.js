@@ -21,17 +21,12 @@ const languageCode = "en-US";
     .detectIntent(request)
     //implicitly detect intent trying to trigger / should sent trigger
     .then(responses => {
-      console.log('Detected intent');
-      const result = responses[0].queryResult;
-      console.log(result)
-      // if(!result.allRequredParamsPresent){
+      const result = responses[0].queryResult;      // if(!result.allRequredParamsPresent){
       //     //call function again
       // }
-      console.log(`  Query: ${result.queryText}`);
-      console.log(`  Response: ${result.fulfillmentText}`);
-      
+
       if (result.intent) {
-        console.log(`  Intent: ${result.intent.displayName}`);
+        console.log(`************  Intent: ${result.intent.displayName}`);
         return result;
       } else {
         console.log(`  No intent matched.`);
