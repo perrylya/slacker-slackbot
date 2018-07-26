@@ -6,13 +6,13 @@ const query = 'Schedule a meeting with Francis';
 const languageCode = "en-US";
 
 
- export function interpret(slackId, query){
+ export default function interpret(slackId, query){
   const sessionPath = sessionClient.sessionPath(projectId, slackId);
   const request = {
     session: sessionPath, //keeps track of which conversation is which, using unique sessionId/slackId
     queryInput: {
       text: {
-        text: event.text,
+        text: query,
         languageCode: languageCode,
       },
     },
@@ -29,8 +29,7 @@ const languageCode = "en-US";
       // }
       console.log(`  Query: ${result.queryText}`);
       console.log(`  Response: ${result.fulfillmentText}`);
-      rtm.sendMessage(result.fulfillmentText, channelId)
-
+      
       if (result.intent) {
         console.log(`  Intent: ${result.intent.displayName}`);
         return result;

@@ -9,22 +9,21 @@ import {getAuthUrl,getToken, createEvent, refreshToken} from './calendar.js'
 
 const web = new WebClient(token)
 const rtm = new RTMClient(token);
-const channelId = 'CBVD6FC7L';
-
+const bot_id = 'UBWEDHM4P';
 rtm.start();
 
 rtm.on('message', async (event) => {
   try {
-    if(event.bot_id || !event.user)return;
-
-    let user = await User.findOne({slackId: event.user})
+    console.log(event);
+    if( event.user === bot_id || !event.user)return;
+    let user = await User.findOne({SlackId: event.user})
+    console.log(user);
     if (!user){
-  
-      var authenticate = getAuthUrl(event.user);
-      console.log(authenticate);
-      return rtm.sendMessage('Please sign in with Google'+authenticate, event.channel)
+      console.log('hi');
+      return rtm.sendMessage('Please sign in with Google'+getAuthUrl(event.user), event.channel)
     }
     else if(user.googleTokens.expiry_date < Date.now() + 60000){ //check expiry date
+      console.log('in here too');
       let token = refreshToken(user.googleTokens)
       user.googleTokens = token
       await user.save()
@@ -32,17 +31,19 @@ rtm.on('message', async (event) => {
     }
 
     let botResponse = await interpret(event.user, event.text)
-
-    if(!botResponse.allRequiredParamsPresent)
-    rtm.sendMessage(botResponse.fulfillmentText,event.channel)
-    .catch(console.error)
+    console.log('***************************************',botResponse);
+    if(!botResponse.allRequiredParamsPresent){
+      console.log('HOLY SHIT');
+    // rtm.sendMessage(botResponse.fulfillmentText,event.channel)
+    // .catch(console.error)
+    }
     else {
-
-      let {invitee, day, time} = botResponse.parameters.fields
-      let person = invitee.listValue.values[0]
-      let text = `Confirm a meeting with ${person.stringVale} on ${new Date(day.stringValue).toDateString()} `;
-      const data = {person: person.stringValue, date: new Date(day.stringValue), time: new Date(time.stringValue).toDateString(), summary: text};
-
+      let {date, action, task} = botResponse.parameters.fields
+      console.log('00000000000000000000000000000000',botResponse.parameters.fields);
+      // let person = invitee.listValue.values[0]
+      let text = `Confirm a reminder on ${new Date(date.stringValue).toDateString()} to ${action}`;
+      const data = {date: new Date(date.stringValue), action: action, summary: text};
+      console.log('hereeeeeeeeeeeeeee');
       web.chat.postMessage({
         Channel: event.channel,
         Text: "Hello there",
@@ -77,55 +78,3 @@ rtm.on('message', async (event) => {
     console.log(e);
   }
 })
-
-
-
-
-
-
-//check if(botResponse.allRequiredParamsPresent)
-// rtm.sendMessage(botResponse.fullfillmentText,event.channel).catch(console.error)
-// else {
-//rtm.sendMessage("conversation complete", event.channel)
-//}
-
-
-
-
-// export function interpret(slackId, query){
-// const sessionPath = sessionClient.sessionPath(projectId, sessionId);
-// const request = {
-//   session: sessionPath, //keeps track of which conversation is which, using unique sessionId/slackId
-//   queryInput: {
-//     text: {
-//       text: event.text,
-//       languageCode: languageCode,
-//     },
-//   },
-// };
-// sessionClient
-//   .detectIntent(request)
-//   //implicitly detect intent trying to trigger / should sent trigger
-//   .then(responses => {
-//     console.log('Detected intent');
-//     const result = responses[0].queryResult;
-//     console.log(result)
-//     // if(!result.allRequredParamsPresent){
-//     //     //call function again
-//     // }
-//     console.log(`  Query: ${result.queryText}`);
-//     console.log(`  Response: ${result.fulfillmentText}`);
-//     rtm.sendMessage(result.fulfillmentText, channelId)
-
-//     if (result.intent) {
-//       console.log(`  Intent: ${result.intent.displayName}`);
-//     } else {
-//       console.log(`  No intent matched.`);
-//     }
-//   })
-//   .catch(err => {
-//     console.error('ERROR:', err);
-//   });
-
-// // .catch(resp=> console.log('Error', error))
-// }
