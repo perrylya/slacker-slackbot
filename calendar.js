@@ -54,11 +54,7 @@ function createEvent(token, data){
               dateTime: start.toISOString()
           },
           end: {
-<<<<<<< HEAD:calender.js
-              dateTime: new Date(start.getTime + 1800000).toISOString()
-=======
             dateTime: new Date(start.getTime() + 1800000).toISOString()
->>>>>>> 4ddf12ba176a6f3ef9ed91118cc8412860b91328:calendar.js
           }
       }
 
