@@ -24,7 +24,7 @@ rtm.on('message', async (event) => {
     }
     else if(user.googleTokens.expiry_date < Date.now() + 60000){ //check expiry date
       console.log('in here too');
-      let token = refreshToken(user.googleTokens)
+      let token = await refreshToken(user.googleTokens)
       user.googleTokens = token
       await user.save()
       return
