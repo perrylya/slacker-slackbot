@@ -35,25 +35,27 @@ function getClient(){
 }
 //   console.log(authUrl)
 
-function createEvent(token, data){
+async function createEvent(token, data){
     let client = getClient()
     client.setCredentials(token)
 
     const calendar = google.calendar({version: 'v3', auth: client});
     console.log('------',data)
-    console.log('11111111111111111111',data.date);
-    let DateTime start = new DateTime(data.date)
-    let DateTime end = new DateTime(start + 1800000).toISOString()
-    console.log('00000000000000000000000000',end);
+    let start = new Date(data.date.stringValue);
+    console.log('8888888888888888',start);
+    let time = new Date(data.time.stringValue);
+    start.setHours(time.getHours());
+    start.setMinutes(time.getMinutes());
+    let end = new Date(+start + 1800000).toISOString()
     console.log('-----------',start);
+    console.log('00000000000000000000000000',end);
     // let time = new Date(data.time);
       // start.setHours(time.getHours());
       // start.setMinutes(time.getMinutes());
-    console.log('-----------------',start);
-    calendar.events.insert({ //inserting an event
-      calenderId: 'primary',
+    await calendar.events.insert({ //inserting an event
+      calendarId: "primary",
       resource: {
-          summary: data.summary,
+          summary: data.action.stringValue,
           start: {
               dateTime: start.toISOString()
           },
@@ -61,10 +63,11 @@ function createEvent(token, data){
             dateTime:end
           }
       }
-
     },
     (err,resp)=> {
+      console.log(err);
       console.log(resp)
+      console.log(token);
     })
 
 

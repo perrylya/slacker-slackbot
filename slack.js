@@ -43,18 +43,18 @@ rtm.on('message', async (event) => {
     }
     else if(botResponse.allRequiredParamsPresent && botResponse.intent.displayName === 'reminder'){
       console.log(botResponse.parameters.fields);
-      let {date, action, task} = botResponse.parameters.fields
+      let {date, action, task, time} = botResponse.parameters.fields
       // let person = invitee.listValue.values[0]
-      const data = {date: new Date(date.stringValue), action: action, task: task};
-      console.log('hereeeeeeeeeeeeeee');
+      const data = {date: new Date(date.stringValue), action: action, task: task, date: date, time: time};
+      console.log('&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&',data);
       web.chat.postMessage({
         channel: event.channel,
-          "text": "Would you like to play a game?",
+          "text": "Hello there",
           "attachments": [
             {
-              "text": "Choose a game to play",
-              "fallback": "You are unable to choose a game",
-              "callback_id": "wopr_game",
+              "text": botResponse.fulfillmentText,
+              "fallback": "Request failed. Send in the request again",
+              "callback_id": "remindr",
               "color": "#3AA3E3",
               "attachment_type": "default",
               "actions": [
